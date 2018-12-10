@@ -1,0 +1,16 @@
+This is a text file for instructions involving AR GLASSES. Different functions transmitted through bluetooth trigger different commands.
+Since multiple commands have similar letters, different keys are used for different functions.
+
+Buttons:
+Y: Time
+F: Fun1
+C: Compass
+G: GPS
+D: Fun2
+S: Stopwatch
+I: Temperature
+P: Pressure
+A: Altitude
+H: Humidity
+
+Libraries required to add in your IDE will be in the repository
