@@ -25,8 +25,8 @@ unsigned long delayTime;
 #define MAGENTA         0xF81F
 #define YELLOW          0xFFE0
 #define WHITE           0xFFFF
-#define sclk 13
-#define mosi 11
+#define sclk 15
+#define mosi 16
 #define cs   10
 #define rst  9
 #define dc   8
@@ -74,13 +74,22 @@ void setup() {
   delay(300);
   display.fillScreen(BLACK);
   delay(1000);
+  display.fillRect(10, 40, 75, 20, BLUE);
+
+    display.setCursor(20, 47);
+    display.setTextColor(WHITE);
+    display.setTextSize(1.75);
+    display.print("Hello!");
+     display.setCursor(20, 5);
+    display.setTextColor(WHITE);
+    display.setTextSize(1.5);
+    display.print("ARGlass-Beta");
   while (!Serial) ; // Needed for Leonardo only
   pinMode(13, OUTPUT);
   setSyncProvider( requestSync);  //set function to call when sync required
 
   /*
      display.fillRect(10, 40, 75, 20, RED);
-
     display.setCursor(20, 47);
     display.setTextColor(WHITE);
     display.setTextSize(1);
@@ -270,25 +279,7 @@ void blue() {
 
 }
 void environment() {
-  Serial.print("Temperature = ");
-  Serial.print(bme.readTemperature());
-  Serial.println(" *C");
-
-  Serial.print("Pressure = ");
-
-  Serial.print(bme.readPressure() / 100.0F);
-  Serial.println(" hPa");
-
-  Serial.print("Approx. Altitude = ");
-  Serial.print(bme.readAltitude(SEALEVELPRESSURE_HPA));
-  Serial.println(" m");
-
-  Serial.print("Humidity = ");
-  Serial.print(bme.readHumidity());
-  Serial.println(" %");
-
-  Serial.println();
-
+ 
   if (state == 'I') {
     display.fillRect(10, 40, 75, 20, RED);
 
@@ -348,7 +339,4 @@ void environment() {
   }
 }
 //_________________________________________________________________
-
-
-
 
