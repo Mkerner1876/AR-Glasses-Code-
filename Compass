@@ -1,109 +1,135 @@
-//https://github.com/sleemanj/HMC5883L_Simple
-/*
- * 
- * Compass.ino - Example sketch for reading a heading from an HMC5883L triple axis magnetometer.
- * 
- * GY-273 Compass Module  ->  Arduino
- * VCC  -> VCC  (See Note Below)
- * GND  -> GND
- * SCL  -> A5/SCL, (Use Pin 21 on the Arduino Mega)
- * SDA  -> A4/SDA, (Use Pin 20 on the Arduino Mega)
- * DRDY -> Not Connected (in this example)
- * 
- * Voltage Note
- * ~~~~~~~~~~~~  
- * The GY-273 Board has a 3v3 Regulator on it, and the SDA/SCL are pulled up to that so it is OK to 
- * use with 5v Arduino's.
- * 
- * If you are using any other breakout, or the raw IC, you need to be using 3v3 to supply and signal!
- * 
- * Datasheet: http://goo.gl/w1criV
- * 
- * Copyright (C) 2014 James Sleeman
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a 
- * copy of this software and associated documentation files (the "Software"), 
- * to deal in the Software without restriction, including without limitation 
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- * and/or sell copies of the Software, and to permit persons to whom the 
- * Software is furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in 
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN 
- * THE SOFTWARE.
- * 
- * @author James Sleeman, http://sparks.gogo.co.nz/
- * @license MIT License
- * 
- */
+//https://github.com/jarzebski/Arduino-HMC5883L
+HMC5883L Triple Axis Digital Compass. Simple Example.
+  Read more: http://www.jarzebski.pl/arduino/czujniki-i-sensory/3-osiowy-magnetometr-hmc5883l.html
+  GIT: https://github.com/jarzebski/Arduino-HMC5883L
+  Web: http://www.jarzebski.pl
+  (c) 2014 by Korneliusz Jarzebski
+*/
 
-#include <Arduino.h>
 #include <Wire.h>
-#include <HMC5883L_Simple.h>
+#include <HMC5883L.h>
 
-// Create a compass
-HMC5883L_Simple Compass;
+HMC5883L compass;
 
 void setup()
 {
   Serial.begin(9600);
-  Wire.begin();
-    
-  // Magnetic Declination is the correction applied according to your present location
-  // in order to get True North from Magnetic North, it varies from place to place.
-  // 
-  // The declination for your area can be obtained from http://www.magnetic-declination.com/
-  // Take the "Magnetic Declination" line that it gives you in the information, 
-  //
-  // Examples:
-  //   Christchurch, 23° 35' EAST
-  //   Wellington  , 22° 14' EAST
-  //   Dunedin     , 25° 8'  EAST
-  //   Auckland    , 19° 30' EAST
-  //    
-  Compass.SetDeclination(23, 35, 'E');  
+
+  // Initialize HMC5883L
+  Serial.println("Initialize HMC5883L");
+  while (!compass.begin())
+  {
+    Serial.println("Could not find a valid HMC5883L sensor, check wiring!");
+    delay(500);
+  }
   
-  // The device can operate in SINGLE (default) or CONTINUOUS mode
-  //   SINGLE simply means that it takes a reading when you request one
-  //   CONTINUOUS means that it is always taking readings
-  // for most purposes, SINGLE is what you want.
-  Compass.SetSamplingMode(COMPASS_SINGLE);
-  
-  // The scale can be adjusted to one of several levels, you can probably leave it at the default.
-  // Essentially this controls how sensitive the device is.
-  //   Options are 088, 130 (default), 190, 250, 400, 470, 560, 810
-  // Specify the option as COMPASS_SCALE_xxx
-  // Lower values are more sensitive, higher values are less sensitive.
-  // The default is probably just fine, it works for me.  If it seems very noisy
-  // (jumping around), incrase the scale to a higher one.
-  Compass.SetScale(COMPASS_SCALE_130);
-  
-  // The compass has 3 axes, but two of them must be close to parallel to the earth's surface to read it, 
-  // (we do not compensate for tilt, that's a complicated thing) - just like a real compass has a floating 
-  // needle you can imagine the digital compass does too.
-  //
-  // To allow you to mount the compass in different ways you can specify the orientation:
-  //   COMPASS_HORIZONTAL_X_NORTH (default), the compass is oriented horizontally, top-side up. when pointing North the X silkscreen arrow will point North
-  //   COMPASS_HORIZONTAL_Y_NORTH, top-side up, Y is the needle,when pointing North the Y silkscreen arrow will point North
-  //   COMPASS_VERTICAL_X_EAST,    vertically mounted (tall) looking at the top side, when facing North the X silkscreen arrow will point East
-  //   COMPASS_VERTICAL_Y_WEST,    vertically mounted (wide) looking at the top side, when facing North the Y silkscreen arrow will point West  
-  Compass.SetOrientation(COMPASS_HORIZONTAL_X_NORTH);
-  
+  // Set measurement range
+  // +/- 0.88 Ga: HMC5883L_RANGE_0_88GA
+  // +/- 1.30 Ga: HMC5883L_RANGE_1_3GA (default)
+  // +/- 1.90 Ga: HMC5883L_RANGE_1_9GA
+  // +/- 2.50 Ga: HMC5883L_RANGE_2_5GA
+  // +/- 4.00 Ga: HMC5883L_RANGE_4GA
+  // +/- 4.70 Ga: HMC5883L_RANGE_4_7GA
+  // +/- 5.60 Ga: HMC5883L_RANGE_5_6GA
+  // +/- 8.10 Ga: HMC5883L_RANGE_8_1GA
+  compass.setRange(HMC5883L_RANGE_1_3GA);
+
+  // Set measurement mode
+  // Idle mode:              HMC5883L_IDLE
+  // Single-Measurement:     HMC5883L_SINGLE
+  // Continuous-Measurement: HMC5883L_CONTINOUS (default)
+  compass.setMeasurementMode(HMC5883L_CONTINOUS);
+ 
+  // Set data rate
+  //  0.75Hz: HMC5883L_DATARATE_0_75HZ
+  //  1.50Hz: HMC5883L_DATARATE_1_5HZ
+  //  3.00Hz: HMC5883L_DATARATE_3HZ
+  //  7.50Hz: HMC5883L_DATARATE_7_50HZ
+  // 15.00Hz: HMC5883L_DATARATE_15HZ (default)
+  // 30.00Hz: HMC5883L_DATARATE_30HZ
+  // 75.00Hz: HMC5883L_DATARATE_75HZ
+  compass.setDataRate(HMC5883L_DATARATE_15HZ);
+
+  // Set number of samples averaged
+  // 1 sample:  HMC5883L_SAMPLES_1 (default)
+  // 2 samples: HMC5883L_SAMPLES_2
+  // 4 samples: HMC5883L_SAMPLES_4
+  // 8 samples: HMC5883L_SAMPLES_8
+  compass.setSamples(HMC5883L_SAMPLES_1);
+
+  // Check settings
+  checkSettings();
 }
 
-// Our main program loop.
+void checkSettings()
+{
+  Serial.print("Selected range: ");
+  
+  switch (compass.getRange())
+  {
+    case HMC5883L_RANGE_0_88GA: Serial.println("0.88 Ga"); break;
+    case HMC5883L_RANGE_1_3GA:  Serial.println("1.3 Ga"); break;
+    case HMC5883L_RANGE_1_9GA:  Serial.println("1.9 Ga"); break;
+    case HMC5883L_RANGE_2_5GA:  Serial.println("2.5 Ga"); break;
+    case HMC5883L_RANGE_4GA:    Serial.println("4 Ga"); break;
+    case HMC5883L_RANGE_4_7GA:  Serial.println("4.7 Ga"); break;
+    case HMC5883L_RANGE_5_6GA:  Serial.println("5.6 Ga"); break;
+    case HMC5883L_RANGE_8_1GA:  Serial.println("8.1 Ga"); break;
+    default: Serial.println("Bad range!");
+  }
+  
+  Serial.print("Selected Measurement Mode: ");
+  switch (compass.getMeasurementMode())
+  {  
+    case HMC5883L_IDLE: Serial.println("Idle mode"); break;
+    case HMC5883L_SINGLE:  Serial.println("Single-Measurement"); break;
+    case HMC5883L_CONTINOUS:  Serial.println("Continuous-Measurement"); break;
+    default: Serial.println("Bad mode!");
+  }
+
+  Serial.print("Selected Data Rate: ");
+  switch (compass.getDataRate())
+  {  
+    case HMC5883L_DATARATE_0_75_HZ: Serial.println("0.75 Hz"); break;
+    case HMC5883L_DATARATE_1_5HZ:  Serial.println("1.5 Hz"); break;
+    case HMC5883L_DATARATE_3HZ:  Serial.println("3 Hz"); break;
+    case HMC5883L_DATARATE_7_5HZ: Serial.println("7.5 Hz"); break;
+    case HMC5883L_DATARATE_15HZ:  Serial.println("15 Hz"); break;
+    case HMC5883L_DATARATE_30HZ: Serial.println("30 Hz"); break;
+    case HMC5883L_DATARATE_75HZ:  Serial.println("75 Hz"); break;
+    default: Serial.println("Bad data rate!");
+  }
+  
+  Serial.print("Selected number of samples: ");
+  switch (compass.getSamples())
+  {  
+    case HMC5883L_SAMPLES_1: Serial.println("1"); break;
+    case HMC5883L_SAMPLES_2: Serial.println("2"); break;
+    case HMC5883L_SAMPLES_4: Serial.println("4"); break;
+    case HMC5883L_SAMPLES_8: Serial.println("8"); break;
+    default: Serial.println("Bad number of samples!");
+  }
+
+}
+
 void loop()
 {
-   float heading = Compass.GetHeadingDegrees();
-   
-   Serial.print("Heading: \t");
-   Serial.println( heading );   
-   delay(1000);
+  Vector raw = compass.readRaw();
+  Vector norm = compass.readNormalize();
+
+  Serial.print(" Xraw = ");
+  Serial.print(raw.XAxis);
+  Serial.print(" Yraw = ");
+  Serial.print(raw.YAxis);
+  Serial.print(" Zraw = ");
+  Serial.print(raw.ZAxis);
+  Serial.print(" Xnorm = ");
+  Serial.print(norm.XAxis);
+  Serial.print(" Ynorm = ");
+  Serial.print(norm.YAxis);
+  Serial.print(" ZNorm = ");
+  Serial.print(norm.ZAxis);
+  Serial.println();  
+
+  delay(100);
 }
